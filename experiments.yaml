@@ -3,3 +3,5 @@ queries:
   - "SELECT count(*) FROM document_signatures"
   - "SELECT count(*) FROM signers"
   - "SELECT count(*) FROM duplicated_companies"
+  - "SELECT count(*) FROM flyway_schema_history"
+  - "SELECT count(*) FROM int_lock"
