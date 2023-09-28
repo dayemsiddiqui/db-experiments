@@ -1,34 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"db-experiments/config"
 	"db-experiments/database"
 	"fmt"
 	"sync"
 )
-
-func runQuery(db *sql.DB, query string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	rows, err := db.Query(query)
-	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s\n", query, err)
-		return
-	}
-	defer rows.Close()
-
-	var count int
-	for rows.Next() {
-		err := rows.Scan(&count)
-		if err != nil {
-			fmt.Printf("Failed to read result for query %s: %s\n", query, err)
-			return
-		}
-	}
-
-	fmt.Printf("Query: %s, Result: %d\n", query, count)
-}
 
 func main() {
 	// Read config from experiments.yaml
@@ -63,7 +40,7 @@ func main() {
 	var wg sync.WaitGroup
 	for _, query := range cfg.Queries {
 		wg.Add(1)
-		go runQuery(db, query, &wg)
+		go database.RunQuery(db, query, &wg)
 	}
 	wg.Wait()
 

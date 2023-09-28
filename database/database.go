@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"os/exec"
+	"sync"
 	"time"
 )
 
@@ -61,4 +62,26 @@ func LoadDatabaseDump(cfg *DBConfig, filepath string) error {
 	}
 	log.Printf("Successfully loaded database dump.")
 	return nil
+}
+
+func RunQuery(db *sql.DB, query string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	rows, err := db.Query(query)
+	if err != nil {
+		fmt.Printf("Failed to execute query %s: %s\n", query, err)
+		return
+	}
+	defer rows.Close()
+
+	var count int
+	for rows.Next() {
+		err := rows.Scan(&count)
+		if err != nil {
+			fmt.Printf("Failed to read result for query %s: %s\n", query, err)
+			return
+		}
+	}
+
+	fmt.Printf("Query: %s, Result: %d\n", query, count)
 }
