@@ -1,7 +1,18 @@
 dump_path: "./dump.sql"
+traffic: 1000
 queries:
-  - "SELECT count(*) FROM document_signatures"
-  - "SELECT count(*) FROM signers"
-  - "SELECT count(*) FROM duplicated_companies"
-  - "SELECT count(*) FROM flyway_schema_history"
-  - "SELECT count(*) FROM int_lock"
+  - name: "Count of document signatures"
+    query: "SELECT count(*) FROM document_signatures"
+    traffic_percent: 0.5
+  - name: "Count of signers"
+    query: "SELECT count(*) FROM signers"
+    traffic_percent: 0.2
+  - name: "Count of duplicated companies"
+    query: "SELECT count(*) FROM duplicated_companies"
+    traffic_percent: 0.1
+  - name: "Count of flyway schema history"
+    query: "SELECT count(*) FROM flyway_schema_history"
+    traffic_percent: 0.1
+  - name: "Count of int lock"
+    query: "SELECT count(*) FROM int_lock"
+    traffic_percent: 0.1

@@ -2,6 +2,8 @@ package database
 
 import (
 	"database/sql"
+	"db-experiments/config"
+	_ "db-experiments/config"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
@@ -64,24 +66,25 @@ func LoadDatabaseDump(cfg *DBConfig, filepath string) error {
 	return nil
 }
 
-func RunQuery(db *sql.DB, query string, wg *sync.WaitGroup) {
+func RunQuery(db *sql.DB, queryConfig config.QueryConfig, count int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	rows, err := db.Query(query)
-	if err != nil {
-		fmt.Printf("Failed to execute query %s: %s\n", query, err)
-		return
-	}
-	defer rows.Close()
-
-	var count int
-	for rows.Next() {
-		err := rows.Scan(&count)
+	for i := 0; i < count; i++ {
+		rows, err := db.Query(queryConfig.Query)
 		if err != nil {
-			fmt.Printf("Failed to read result for query %s: %s\n", query, err)
+			fmt.Printf("Failed to execute query %s: %s\n", queryConfig.Query, err)
 			return
 		}
-	}
+		defer rows.Close()
 
-	fmt.Printf("Query: %s, Result: %d\n", query, count)
+		var count int
+		for rows.Next() {
+			err := rows.Scan(&count)
+			if err != nil {
+				fmt.Printf("Failed to read result for query %s: %s\n", queryConfig.Query, err)
+				return
+			}
+		}
+		fmt.Printf("Query: %s, Result: %d\n", queryConfig.Query, count)
+	}
 }

@@ -36,13 +36,16 @@ func main() {
 		return
 	}
 
-	// Run queries from config in separate goroutines
+	// Run queries from config in separate goroutines based on their traffic percent
 	var wg sync.WaitGroup
-	for _, query := range cfg.Queries {
+	for _, queryConfig := range cfg.Queries {
+		queryCount := int(float64(cfg.Traffic) * queryConfig.TrafficPercent)
 		wg.Add(1)
-		go database.RunQuery(db, query, &wg)
+		go database.RunQuery(db, queryConfig, queryCount, &wg)
 	}
 	wg.Wait()
+
+	fmt.Println("Successfully connected to and initialized the Postgres database.")
 
 	fmt.Println("Successfully connected to and initialized the Postgres database.")
 }
