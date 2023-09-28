@@ -1,0 +1,5 @@
+dump_path: "./dump.sql"
+queries:
+  - "SELECT count(*) FROM document_signatures"
+  - "SELECT count(*) FROM signers"
+  - "SELECT count(*) FROM duplicated_companies"
