@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
+	"os/exec"
 	"time"
 )
 
@@ -32,4 +33,30 @@ func ConnectDatabase(retries int) (*sql.DB, error) {
 	}
 
 	return nil, fmt.Errorf("could not connect to the database after %d attempts", retries)
+}
+
+func LoadDatabaseDump(filepath string) error {
+	// Replace the following placeholders with actual values
+	host := "localhost"
+	port := "5432"
+	user := "user"
+	password := "password"
+	dbname := "mydatabase"
+
+	// Set the command to run psql and load the dump
+	cmd := exec.Command(
+		"bash",
+		"-c",
+		fmt.Sprintf("PGPASSWORD=%s psql -h %s -p %s -U %s -d %s < %s", password, host, port, user, dbname, filepath),
+	)
+
+	// Execute the command
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("Failed to load database dump: %s", err)
+		log.Printf("Command output: %s", string(out))
+		return err
+	}
+	log.Printf("Successfully loaded database dump.")
+	return nil
 }

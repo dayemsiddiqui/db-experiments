@@ -13,6 +13,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %s", err)
 	}
+	err = database.LoadDatabaseDump("./dump.sql")
+	if err != nil {
+		log.Fatalf("Failed to load the database dump: %s", err)
+	}
 	defer db.Close()
 
 	fmt.Println("Successfully connected to the Postgres database.")
