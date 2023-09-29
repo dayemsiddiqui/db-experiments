@@ -3,11 +3,13 @@ package main
 import (
 	"db-experiments/config"
 	"db-experiments/database"
+	"db-experiments/docker"
 	"fmt"
 	"sync"
 )
 
 func main() {
+	docker.RunContainer()
 	// Read config from experiments.yaml
 	cfg, err := config.ReadConfig()
 	if err != nil {
@@ -22,12 +24,12 @@ func main() {
 		Password: "password",
 		DBName:   "mydatabase",
 	}
-
 	db, err := database.ConnectDatabase(dbCfg, 5) // Try connecting 5 times
 	if err != nil {
 		fmt.Printf("Failed to connect to the database: %s\n", err)
 		return
 	}
+	db.SetMaxOpenConns(20)
 	defer db.Close()
 	// Load dump file from config
 	err = database.LoadDatabaseDump(dbCfg, cfg.DumpPath)
