@@ -3,14 +3,13 @@ package config
 import (
 	"errors"
 	"gopkg.in/yaml.v2"
-	"math"
 	"os"
 )
 
 type QueryConfig struct {
-	Name           string  `yaml:"name"`
-	Query          string  `yaml:"query"`
-	TrafficPercent float64 `yaml:"traffic_percent"`
+	Name           string `yaml:"name"`
+	Query          string `yaml:"query"`
+	TrafficPercent int    `yaml:"traffic_percent"`
 }
 
 type InputParameters struct {
@@ -25,11 +24,6 @@ type Config struct {
 	Parameters []InputParameters `yaml:"parameters"`
 }
 
-func roundToPlaces(value float64, places int) float64 {
-	multiplier := math.Pow(10, float64(places))
-	return math.Round(value*multiplier) / multiplier
-}
-
 func ReadConfig() (*Config, error) {
 	configFile, err := os.ReadFile("experiments.yaml")
 	if err != nil {
@@ -42,12 +36,20 @@ func ReadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	totalPercent := 0.0
+	trafficValidationError := ValidateTrafficConfig(cfg)
+	if trafficValidationError != nil {
+		return nil, trafficValidationError
+	}
+	return &cfg, nil
+}
+
+func ValidateTrafficConfig(cfg Config) error {
+	totalPercent := 0
 	for _, q := range cfg.Queries {
 		totalPercent += q.TrafficPercent
 	}
-	if roundToPlaces(totalPercent, 2) != 1.0 {
-		return nil, errors.New("total traffic_percent does not sum up to 100%")
+	if totalPercent != 100 {
+		return errors.New("total traffic_percent does not sum up to 100%")
 	}
-	return &cfg, nil
+	return nil
 }

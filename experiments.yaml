@@ -5,18 +5,6 @@ parameters:
     value: [1, 2, 3, 4, 5]
 
 queries:
-  - name: "Count of document signatures"
-    query: "SELECT count(*) FROM document_signatures"
-    traffic_percent: 0.5
-  - name: "Count of signers"
-    query: "SELECT count(*) FROM signers"
-    traffic_percent: 0.2
-  - name: "Count of duplicated companies"
-    query: "SELECT count(*) FROM duplicated_companies"
-    traffic_percent: 0.1
-  - name: "Count of int lock"
-    query: "SELECT count(*) FROM int_lock"
-    traffic_percent: 0.1
   - name: "List documents by IDs"
     query: "SELECT t1.*, s.*
   FROM document_signatures AS t1
@@ -24,23 +12,24 @@ queries:
   LEFT OUTER JOIN signers AS s ON t1.uuid = s.document_signature_uuid
   WHERE t2.created_at IS NULL AND t1.document_id = ANY(ARRAY[document_ids])
   ORDER BY t1.created_at, s.order;"
-    traffic_percent: 0.1
+    traffic_percent: 50
+  - name: "Search documents with pagination"
+    query: "WITH documents_page AS (
+  SELECT t1.*
+  FROM document_signatures AS t1
+  LEFT OUTER JOIN document_signatures AS t2 ON t1.document_id = t2.document_id AND t1.created_at < t2.created_at
+  WHERE t2.created_at IS NULL
+  ORDER BY t1.created_at DESC
+  LIMIT 1000 OFFSET 0
+  )
+  SELECT p.*, s.*
+  FROM documents_page AS p
+  LEFT OUTER JOIN signers AS s ON p.uuid = s.document_signature_uuid;"
+    traffic_percent: 50
 
 #  - name: "List document signatures by document IDs"
 
 
 
  # - name: "Search documents with pagination"
-#  WITH documents_page AS (
-#  SELECT t1.*
-#  FROM document_signatures AS t1
-#  LEFT OUTER JOIN document_signatures AS t2 ON t1.document_id = t2.document_id AND t1.created_at < t2.created_at
-#  WHERE t2.created_at IS NULL
-#  AND (t1.status = ANY(ARRAY[statuses]) OR statuses IS NULL)  -- replace statuses with actual statuses or NULL
-#  AND (t1.requester_id = ANY(ARRAY[requester_ids]) OR requester_ids IS NULL)  -- replace requester_ids with actual requester IDs or NULL
-#  ORDER BY t1.created_at DESC
-#  LIMIT limit OFFSET offset  -- replace limit and offset with actual numbers
-#  )
-#  SELECT p.*, s.*
-#  FROM documents_page AS p
-#  LEFT OUTER JOIN signers AS s ON p.uuid = s.document_signature_uuid;
+
