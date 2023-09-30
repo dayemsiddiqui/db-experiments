@@ -2,13 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"db-experiments/config"
 	_ "db-experiments/config"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
 	"os/exec"
-	"sync"
 	"time"
 )
 
@@ -92,21 +90,4 @@ func LoadDatabaseDump(cfg *DBConfig, filepath string) error {
 	}
 
 	return nil
-}
-
-func RunQuery(db *sql.DB, queryConfig config.QueryConfig, count int, wg *sync.WaitGroup) {
-	defer wg.Done()
-	fmt.Println("Running query: ", queryConfig.Name, " ", count, " times")
-	for i := 0; i < count; i++ {
-
-		rows, err := db.Query(queryConfig.Query)
-		if err != nil {
-			fmt.Printf("Failed to execute query %s: %s\n", queryConfig.Query, err)
-			return
-		}
-		err = rows.Close()
-		if err != nil {
-			return
-		}
-	}
 }

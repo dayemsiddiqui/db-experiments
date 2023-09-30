@@ -4,6 +4,7 @@ import (
 	"db-experiments/config"
 	"db-experiments/database"
 	"db-experiments/docker"
+	"db-experiments/execution"
 	"fmt"
 	"sync"
 )
@@ -41,9 +42,12 @@ func main() {
 	// Run queries from config in separate goroutines based on their traffic percent
 	var wg sync.WaitGroup
 	for _, queryConfig := range cfg.Queries {
-		queryCount := int(float64(cfg.Traffic) * queryConfig.TrafficPercent)
 		wg.Add(1)
-		go database.RunQuery(db, queryConfig, queryCount, &wg)
+		runQueryConfig := execution.RunQueryConfig{
+			QueryConfig: queryConfig,
+			Config:      cfg,
+		}
+		go execution.RunQuery(db, runQueryConfig, &wg)
 	}
 	wg.Wait()
 
