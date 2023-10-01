@@ -8,8 +8,6 @@ import (
 )
 
 func AnalyzeQuery(db *sql.DB, query string) error {
-	fmt.Println("Analyzing query: ", query)
-	fmt.Println("=====================================")
 	rows, err := db.Query("EXPLAIN ANALYZE " + query)
 	if err != nil {
 		fmt.Printf("Failed to analyze query %s: %s\n", query, err)
