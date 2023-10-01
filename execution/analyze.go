@@ -4,9 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"regexp"
-	"strings"
 )
 
+// Rule represents a pattern and corresponding suggestion
+type Rule struct {
+	pattern *regexp.Regexp
+	suggest string
+	extract func(matches []string) []string
+}
+
+// AnalyzeQuery runs EXPLAIN ANALYZE and applies analysis rules
 func AnalyzeQuery(db *sql.DB, query string) error {
 	rows, err := db.Query("EXPLAIN ANALYZE " + query)
 	if err != nil {
@@ -15,16 +22,17 @@ func AnalyzeQuery(db *sql.DB, query string) error {
 	}
 	defer rows.Close()
 
-	seqScanCount := 0
-	var tables []string
-	var line string
+	rules := []Rule{
+		{regexp.MustCompile(`Seq Scan on (\w+)`), "Suggestion: Consider using an Index Scan instead of Seq Scan.", extractTable},
+		{regexp.MustCompile(`Sort[^\n]+`), "Suggestion: An index could be used to avoid sorts.", nil},
+		{regexp.MustCompile(`Bitmap Heap Scan on (\w+)`), "Suggestion: See if the query could be rewritten to use an Index Scan.", extractTable},
+		{regexp.MustCompile(`Nested Loop`), "Suggestion: Analyze whether the tables being joined have appropriate indexes.", nil},
+		{regexp.MustCompile(`Hash Join`), "Hash Join: Generally good for medium-to-large data sets.", nil},
+		{regexp.MustCompile(`Merge Join`), "Suggestion: Check if an existing index can be used to speed up a Merge Join.", nil},
+	}
 
-	seqScanRegex := regexp.MustCompile(`Seq Scan on (\w+)`) // Regular expression to match "Seq Scan on [table_name]"
-	sortRegex := regexp.MustCompile(`Sort[^\n]+`)
-	bitmapRegex := regexp.MustCompile(`Bitmap Heap Scan on (\w+)`)
-	nestedLoopRegex := regexp.MustCompile(`Nested Loop`)
-	hashJoinRegex := regexp.MustCompile(`Hash Join`)
-	mergeJoinRegex := regexp.MustCompile(`Merge Join`)
+	var line string
+	var tables []string
 
 	for rows.Next() {
 		if err := rows.Scan(&line); err != nil {
@@ -32,34 +40,19 @@ func AnalyzeQuery(db *sql.DB, query string) error {
 			return err
 		}
 
-		matches := seqScanRegex.FindStringSubmatch(line)
-		if len(matches) > 1 {
-			seqScanCount++
-			tables = append(tables, matches[1]) // The second item in matches will be the table name
-		}
-		// Check for different operations and provide suggestions
-		if seqScanRegex.MatchString(line) {
-			fmt.Println("Suggestion: Consider using an Index Scan instead of Seq Scan.")
-		}
-		if sortRegex.MatchString(line) {
-			fmt.Println("Suggestion: An index could be used to avoid sorts.")
-		}
-		if bitmapRegex.MatchString(line) {
-			fmt.Println("Suggestion: See if the query could be rewritten to use an Index Scan.")
-		}
-		if nestedLoopRegex.MatchString(line) {
-			fmt.Println("Suggestion: Analyze whether the tables being joined have appropriate indexes.")
-		}
-		if hashJoinRegex.MatchString(line) {
-			fmt.Println("Hash Join: Generally good for medium-to-large data sets.")
-		}
-		if mergeJoinRegex.MatchString(line) {
-			fmt.Println("Suggestion: Check if an existing index can be used to speed up a Merge Join.")
+		for _, rule := range rules {
+			matches := rule.pattern.FindStringSubmatch(line)
+			if len(matches) > 0 {
+				//fmt.Println(rule.suggest)
+				if rule.extract != nil {
+					tables = append(tables, rule.extract(matches)...)
+				}
+			}
 		}
 	}
 
-	if seqScanCount > 0 {
-		fmt.Printf("Found %d Seq Scan operations on tables: %s\n", seqScanCount, strings.Join(tables, ", "))
+	if len(tables) > 0 {
+		//fmt.Printf("Tables involved: %s\n", tables)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -67,5 +60,12 @@ func AnalyzeQuery(db *sql.DB, query string) error {
 		return err
 	}
 
+	return nil
+}
+
+func extractTable(matches []string) []string {
+	if len(matches) > 1 {
+		return matches[1:]
+	}
 	return nil
 }
