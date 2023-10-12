@@ -1,5 +1,5 @@
 dump_path: "./dump.sql"
-traffic: 10000000
+traffic: 1000
 parameters:
   - name: "document_ids"
     value: [1, 2, 3, 4, 5]

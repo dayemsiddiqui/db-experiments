@@ -5,6 +5,7 @@ import (
 	"db-experiments/database"
 	"db-experiments/docker"
 	"db-experiments/execution"
+	"db-experiments/reporting"
 	"fmt"
 	"sync"
 )
@@ -53,5 +54,7 @@ func main() {
 
 	fmt.Println("Successfully connected to and initialized the Postgres database.")
 
-	fmt.Println("Successfully connected to and initialized the Postgres database.")
+	fmt.Println("Generating reports...")
+	// Generate reports
+	reporting.GenerateReport(db)
 }

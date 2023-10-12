@@ -16,7 +16,7 @@ func RunQuery(db *sql.DB, runConfig RunQueryConfig, wg *sync.WaitGroup) {
 	fmt.Println("Running query: ", queryConfig.Name, " ", count, " times")
 	query := query_preparation.PrepareQuery(cfg, &queryConfig)
 
-	if analysisErr := AnalyzeQuery(db, query); analysisErr != nil {
+	if _, analysisErr := AnalyzeQuery(db, query); analysisErr != nil {
 		return
 	}
 
